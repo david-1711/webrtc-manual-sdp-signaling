@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>DT XTech WebRTC Player</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+	<style>
+		body {
+			background-color: #212529;
+			color: #dee2e6;
+		}
+
+		h1 {
+			margin-top: -40px;
+			/* You can adjust this value to move the heading upwards */
+		}
+
+		.container {
+			margin-top: 50px;
+		}
+
+		h1 {
+			color: #17a2b8;
+		}
+
+		.video-container {
+			border-top: 2px solid #17a2b8;
+			border-bottom: 2px solid #17a2b8;
+			border-radius: 10px;
+			overflow: hidden;
+			position: relative;
+			padding-top: 56.25%;
+			/* 16:9 Aspect Ratio (responsive video) */
+		}
+
+		.video-container video {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+		}
+
+		.btn-container {
+			margin-top: 5px;
+		}
+
+		.btn-container .btn {
+			width: calc(50% - 10px);
+			/* Subtracting 10px for margin between buttons */
+			margin-right: 10px;
+		}
+
+		.btn-container .btn:last-child {
+			margin-right: 0;
+		}
+
+		.btn {
+			margin-top: 20px;
+		}
+
+		.connection-info {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+			gap: 10px;
+			margin-bottom: 20px;
+			/* Added margin between the table and video */
+		}
+
+		.connection-info table {
+			width: 100%;
+			/* Match width to video container */
+		}
+
+		.table-offer {
+			width: 90%;
+			/* Adjust as needed */
+			max-width: 800px;
+			/* Maximum width for the table */
+			margin: 0 auto;
+			/* Center the table horizontally */
+			margin-top: 20px;
+			/* Adjust the value as needed */
+			border-collapse: collapse;
+			/* Remove border-collapse */
+			border: 1px solid #17a2b8;
+			/* Add border */
+		}
+
+		.table-offer th,
+		.table-offer td {
+			padding: 8px;
+			text-align: left;
+			color: #dee2e6;
+			border: none;
+			/* Remove border */
+			width: 100%;
+		}
+
+		.table-offer th {
+			background-color: #17a2b8;
+			font-weight: bold;
+		}
+
+		.container .table-offer,
+		.container table {
+			width: 100%;
+			/* Match width to container */
+			max-width: 800px;
+			/* Maximum width for the table */
+			margin: 0 auto;
+			/* Center the table horizontally */
+		}
+
+		th,
+		td {
+			padding: 8px;
+			text-align: left;
+			color: #dee2e6;
+			border: 1px solid #17a2b8;
+			width: 100%;
+		}
+
+		th {
+			background-color: #17a2b8;
+			font-weight: bold;
+		}
+
+		hr {
+			border-color: #17a2b8;
+			/* Match the color with the border */
+			margin: 20px 0;
+			/* Add margin for spacing */
+		}
+
+		input[type="text"] {
+			padding: 10px;
+			border: 1px solid #17a2b8;
+			/* Match the border color */
+			border-radius: 5px;
+			background-color: #333;
+			/* Dark background color */
+			color: #dee2e6;
+			/* Text color */
+			margin-right: 10px;
+			/* Add some space between input elements */
+		}
+
+		input[type="button"] {
+			padding: 10px 20px;
+			border: none;
+			border-radius: 5px;
+			background-color: #17a2b8;
+			/* Button color */
+			color: #fff;
+			/* Text color */
+			cursor: pointer;
+		}
+
+		input::placeholder {
+			color: #dee2e6 !important;
+			/* Your desired color */
+		}
+
+		input[type="button"]:hover {
+			background-color: #138496;
+			/* Darker button color on hover */
+		}
+
+		/* Button when enabled */
+		.btn1 {
+			color: #ffffff;
+			/* White text color */
+			background-color: #17a2b8;
+			/* Original button color */
+			border-color: #17a2b8;
+			/* Original border color */
+			padding: 10px;
+			border: 1px solid #17a2b8;
+			border-radius: 5px;
+		}
+
+		/* Button when enabled and hovered */
+		.btn1:hover:not([disabled]) {
+			background-color: #138496;
+			/* Darker color for hover */
+			border-color: #138496;
+			/* Adjust border color to match */
+		}
+
+		/* Button when disabled */
+		.btn1:disabled {
+			background-color: #17a2b8;
+			/* Original button color */
+			border-color: #17a2b8;
+			/* Original border color */
+			color: #6c757d;
+			/* Default text color for disabled state */
+		}
+
+		.space {
+			margin-top: 10px;
+			/* Adjust the top margin as needed */
+		}
+
+		.button-container {
+			display: flex;
+			justify-content: center;
+			width: 100%;
+			/* Adjust the width as needed */
+			margin: 0 auto;
+			/* Center the container horizontally */
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container text-center">
+		<h1>DT XTech WebRTC Player</h1>
+		<p class="lead">Initiate WebRTC call with a remote peer</p>
+		<div class="connection-info">
+			<table>
+				<tbody>
+					<tr>
+						<th style="width: 100%">ICE Gathering State</th>
+						<td id="iceGatheringState_x">Unknown</td>
+					</tr>
+				</tbody>
+			</table>
+			<table>
+				<tbody>
+					<tr>
+						<th>ICE Connection State</th>
+						<td id="iceConnectionState_x">Unknown</td>
+					</tr>
+				</tbody>
+			</table>
+			<table>
+				<tbody>
+					<tr>
+						<th>Connection State</th>
+						<td id="connectionState_x">Unknown</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="row justify-content-center btn-container">
+			<div class="space"></div>
+			<div class="col-md-8">
+				<button id="uploadICEButton" class="btn1" style="width:100%">
+					Upload ICE Configuration
+				</button>
+				<div class="space"></div>
+			</div>
+		</div>
+		<div class="space"></div>
+
+		<div class="row justify-content-center">
+			<div class="col-md-8">
+				<div class="video-container">
+					<video id="localVideo" controls autoplay muted></video>
+				</div>
+			</div>
+		</div>
+
+		<div class="row justify-content-center btn-container">
+			<div class="col-md-8">
+				<button disabled id="startCallButton" class="btn btn-primary btn-lg">
+					Start Call
+				</button>
+				<button disabled id="stopCallButton" class="btn btn-danger btn-lg">
+					Stop Call
+				</button>
+			</div>
+		</div>
+
+		<div class="container">
+			<table class="table-offer">
+				<tr>
+					<td style="width: 30%; background-color: #17a2b8;">SDP Offer:</td>
+					<td><input id="createdOffer" type="text" style="width: 100%" readonly hidden /></td>
+				</tr>
+			</table>
+
+			<table>
+				<tbody>
+					<tr>
+						<td>
+							<input id="remoteAnswer" type="text" class="form-control" style="width:100%"
+								placeholder="Paste SDP answer here or upload it by pressing upload button">
+							<div class="space"></div>
+							<input type="button" value="Accept Answer" style="width:100%" onclick="acceptAnswer()" />
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<div class="row justify-content-center btn-container">
+				<div class="space"></div>
+				<div class="col-md-8">
+					<button disabled id="downloadButton" class="btn1">
+						Download SDP Offer
+					</button>
+					<button disabled id="uploadButton" class="btn1">
+						Upload SDP Answer
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<hr />
+		<table class="table-offer">
+			<td><input id="text" type="text" style="width:100%" /></td>
+			<td><input type="button" value="Send Notification" style="width:100%" onclick="send_text()" /></td>
+		</table>
+		<hr />
+
+	</div>
+
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+	<script>
+		var peer = null;
+		var candidates = [];
+		var offer = null;
+		let channel = null;
+		var jsonStringOffer = null;
+		var globalIceConfig = null;
+
+		const btnStart = document.getElementById('startCallButton')
+		const btnStop = document.getElementById('stopCallButton')
+		const btnDownload = document.getElementById("downloadButton")
+		const btnUpload = document.getElementById("uploadButton")
+		const btnIceUpload = document.getElementById("uploadICEButton")
+		const localVideoTag = document.getElementById('localVideo')
+
+		localVideoTag.style.display = "none"
+		btnStart.disabled = false;
+		btnDownload.disabled = true;
+		btnUpload.disabled = false;
+
+		async function downloadOffer() {
+			var encryptionKey = prompt("Enter password to encrypt SDP:");
+
+			if (encryptionKey !== null) {
+				// Convert the JSON string data to bytes
+				var dataBytes = new TextEncoder().encode(jsonStringOffer);
+				var salt = crypto.getRandomValues(new Uint8Array(16)); // Generate a random salt
+
+				try {
+					// Derive a key from the password using PBKDF2
+					var keyBytes = await deriveKeyFromPassword(encryptionKey, salt);
+
+					// Generate a cryptographic key from the derived key bytes
+					var cryptoKey = await crypto.subtle.importKey(
+						"raw", // Key format
+						keyBytes,
+						{ name: "AES-GCM" }, // AES algorithm with GCM mode
+						false, // false - Not extractable
+						["encrypt"] // Key usage
+					);
+
+					var iv_value = crypto.getRandomValues(new Uint8Array(12));
+					// console.log("SALT:", salt);
+					// console.log("IV:", iv_value);
+					// to extract and print key(key must be extractable!!)
+					// crypto.subtle.exportKey("raw", cryptoKey).then(function(rawKey) {
+					// 	// rawKey is the exported raw keying material
+					// 	console.log("Crypto key:", rawKey);
+					// }).catch(function(error) {
+					// 	console.error("Error exporting key:", error);
+					// });
+
+					// Encrypt the data using AES encryption with the generated key
+					var encryptedData = await crypto.subtle.encrypt(
+						{
+							name: "AES-GCM",
+							iv: iv_value, // Generate random IV
+							tagLength: 128 // Set the length of the authentication tag to 128 bits
+						},
+						cryptoKey,
+						dataBytes
+					);
+
+					// Create a JSON object to store the salt and encrypted data
+					// IV should be provided with the encrypted data so we do not need to add it to encryptedObject
+					// but this seems not to be the case since iv_value is different then first 12 bytes of data in
+					// created json file
+					var encryptedObject = {
+						salt: Array.from(salt),
+						iv: Array.from(iv_value),
+						data: Array.from(new Uint8Array(encryptedData)) // Convert encryptedData to array before storing
+					};
+					// Convert the object to a JSON string
+					var encryptedJSON = JSON.stringify(encryptedObject);
+
+					// Convert the encrypted data to a Blob
+					var blob = new Blob([encryptedJSON], { type: "application/json" });
+
+					// Create a temporary URL for the Blob
+					var url = URL.createObjectURL(blob);
+
+					// Create a temporary anchor element
+					var a = document.createElement("a");
+					a.href = url;
+
+					// Set the download attribute with the desired filename
+					a.download = "initiator_sdp_offer.json.enc";
+
+					// Append the anchor to the body and click it programmatically to trigger download
+					document.body.appendChild(a);
+					a.click();
+
+					// Remove the anchor from the body
+					document.body.removeChild(a);
+
+					// Revoke the URL to release memory
+					URL.revokeObjectURL(url);
+				} catch (error) {
+					console.error("Encryption error:", error);
+				}
+			} else {
+				console.warn("Skipping encryption of SDP data...");
+				// Create a Blob containing the JSON string data
+				var blob = new Blob([jsonStringOffer], { type: "application/json" });
+
+				// Create a temporary URL for the Blob
+				var url = URL.createObjectURL(blob);
+
+				// Create a temporary anchor element
+				var a = document.createElement("a");
+				a.href = url;
+
+				// Set the download attribute with the desired filename
+				a.download = "initiator_sdp_offer.json"; // Change the filename as desired
+
+				// Append the anchor to the body and click it programmatically to trigger download
+				document.body.appendChild(a);
+				a.click();
+
+				// Remove the anchor from the body
+				document.body.removeChild(a);
+
+				// Revoke the URL to release memory
+				URL.revokeObjectURL(url);
+			}
+		}
+
+		function uploadAnswer() {
+			// Create an input element of type file
+			var input = document.createElement('input');
+			input.type = 'file';
+
+			// Add event listener for when the file selection changes
+			input.addEventListener('change', async function (event) {
+				// Get the selected file
+				var file = event.target.files[0];
+
+
+				// Proceed with decryption
+				// Create a FileReader object to read the contents of the file
+				var reader = new FileReader();
+
+				// Add event listener for when the FileReader finishes reading the file
+				reader.addEventListener('load', async function (event) {
+					// Get the file content
+					var fileContent = event.target.result;
+
+					// Check if the file name ends with ".enc"
+					if (file.name.endsWith('.enc')) {
+							try {
+								// Parse the JSON content of the file
+								var encryptedObject = JSON.parse(fileContent);
+
+								// Extract salt and encrypted data from the parsed object
+								var salt = new Uint8Array(encryptedObject.salt);
+								// Extract IV
+								var iv = new Uint8Array(encryptedObject.iv);
+								var encryptedData = new Uint8Array(encryptedObject.data);
+
+								// Prompt the user for the decryption password
+								var decryptionKey = prompt("Enter password to decrypt the file:");
+
+								// console.log("Decryption password: ", decryptionKey)
+								// console.log("SALT:", salt)
+								// console.log("IV:", iv)
+
+								if (decryptionKey !== null) {
+									// Derive the key from the password using PBKDF2 with the salt
+									var keyBytes = await deriveKeyFromPassword(decryptionKey, salt);
+
+									// Decrypt the data using AES-GCM with the provided key and IV
+									var decryptedData = await decryptWithAESGCM(encryptedData, keyBytes, iv);
+
+									// Convert the decrypted data to a string
+									var decryptedContent = new TextDecoder().decode(decryptedData);
+
+									// Here you can do something with the decrypted content
+									//console.log('Decrypted content:', decryptedContent);
+									// Parse the decrypted JSON content into an object
+									var parsedContent = JSON.parse(decryptedContent);
+									document.getElementById('remoteAnswer').value = JSON.stringify(parsedContent);
+								} else {
+									console.warn("Decryption canceled by user.");
+								}
+							} catch (error) {
+								console.error('Error parsing or decrypting file:', error);
+							}
+					} else {
+						console.warn("Selected SDP file is not encrypted (.enc).");
+						// Handle non-encrypted files
+						var parsedContent = JSON.parse(fileContent);
+						document.getElementById('remoteAnswer').value = JSON.stringify(parsedContent);
+					}
+				});
+					// Read the contents of the selected file as text
+					reader.readAsText(file);
+			});
+
+			// Programmatically click the input element to trigger file selection
+			input.click();
+		}
+
+		async function decryptWithAESGCM(encryptedData, keyBytes, iv) {
+			try {
+				// Import the key from the provided key bytes
+				var cryptoKey = await crypto.subtle.importKey(
+					"raw", // Key format
+					keyBytes,
+					{ name: "AES-GCM" }, // AES algorithm with GCM mode
+					false, // Not extractable
+					["decrypt"] // Key usage
+				);
+
+				// to extract and print key(key must be extractable!!)
+				// crypto.subtle.exportKey("raw", cryptoKey).then(function(rawKey) {
+				// 		// rawKey is the exported raw keying material
+				// 		console.log("Crypto key:", rawKey);
+				// 	}).catch(function(error) {
+				// 		console.error("Error exporting key:", error);
+				// });
+
+				// Decrypt the data using AES-GCM with the provided key and IV
+				var decryptedData = await crypto.subtle.decrypt(
+					{
+						name: "AES-GCM",
+						iv: iv, // Use the provided IV
+						tagLength: 128 // Set the length of the authentication tag to 128 bits
+					},
+					cryptoKey,
+					encryptedData
+				);
+
+				return decryptedData;
+			} catch (error) {
+				console.error("AES-GCM decryption error:", error);
+				throw error;
+			}
+		}
+
+		async function deriveKeyFromPassword(password, salt) {
+			var encoder = new TextEncoder();
+			var passwordBuffer = encoder.encode(password);
+
+			var iterations = 100000; // Number of iterations (adjust according to your security requirements)
+
+			try {
+				// Derive a key using PBKDF2
+				var key = await crypto.subtle.importKey(
+					"raw",
+					passwordBuffer,
+					{ name: "PBKDF2" },
+					false,
+					["deriveKey"]
+				);
+
+				var derivedKey = await crypto.subtle.deriveKey(
+					{
+						name: "PBKDF2",
+						salt: salt,
+						iterations: iterations,
+						hash: { name: "SHA-256" }
+					},
+					key,
+					{ name: "AES-GCM", length: 256 }, // Derive a 256-bit key for AES-GCM
+					true,
+					["encrypt"]
+				);
+
+				// Export the derived key as raw bytes(key must be extractable!!)
+				var keyBytes = await crypto.subtle.exportKey("raw", derivedKey);
+				// to extract and print key(key must be extractable!!)
+				// crypto.subtle.exportKey("raw", derivedKey).then(function(rawKey) {
+				// 		// rawKey is the exported raw keying material
+				// 		console.log("Derived key:", rawKey);
+				// 	}).catch(function(error) {
+				// 		console.error("Error exporting key:", error);
+				// 	});
+
+				return keyBytes;
+			} catch (error) {
+				console.error("Key derivation error:", error);
+				throw error;
+			}
+		}
+
+		function uploadIceConfig() {
+			// Create an input element of type file
+			var input = document.createElement('input');
+			input.type = 'file';
+
+			// Add event listener for when the file selection changes
+			input.addEventListener('change', async function (event) {
+				// Get the selected file
+				var file = event.target.files[0];
+
+
+				// Proceed with decryption
+				// Create a FileReader object to read the contents of the file
+				var reader = new FileReader();
+
+				// Add event listener for when the FileReader finishes reading the file
+				reader.addEventListener('load', async function (event) {
+				// Get the file content
+				var fileContent = event.target.result;
+
+				globalIceConfig = JSON.parse(fileContent);
+				console.log("Loaded object:", globalIceConfig);
+				});
+
+				// Read the contents of the selected file as text
+				reader.readAsText(file);
+			});
+
+			// Programmatically click the input element to trigger file selection
+			input.click();
+		}
+
+		function createPeer() {
+			let config = {
+				iceServers: [
+					{ urls: "stun:stun.l.google.com:19302" }
+				]
+			}
+
+			// Check if globalIceConfig is a JSON object
+			if (typeof globalIceConfig === 'object' && globalIceConfig !== null) {
+				console.log("ICE Config properly loaded as a JSON object.", globalIceConfig);
+				config = globalIceConfig;
+			} else {
+				console.warn("ICE Config did not properly load as a JSON object. Using default config...");
+			}
+
+			console.log("Creating new peer connection...")
+			peer = new RTCPeerConnection(config);
+
+			peer.onicegatheringstatechange = iceGatheringStateChangeHandler;
+			peer.oniceconnectionstatechange = iceConnectionStateChangeHandler;
+			peer.onicecandidate = iceCandidateHandler;
+			peer.onicecandidateerror = iceCandidateErrorHandler;
+			peer.onconnectionstatechange = connectionStateChangeHandler;
+			peer.ondatachannel = dataChannelEvent;
+
+			channel = peer.createDataChannel('data');
+			channel.onmessage = (event) => alert(event.data)
+
+			peer.addEventListener('track', function (evt) {
+				if (evt.track.kind == 'video') {
+					console.log("Recieving media stream");
+
+					localVideoTag.srcObject = evt.streams[0];
+					localVideoTag.style.display = 'inline'
+				}
+			});
+
+			peer.addTransceiver('audio', {
+				direction: 'recvonly'
+			});
+			peer.addTransceiver('video', {
+				direction: 'recvonly'
+			});
+		}
+
+		async function iceGatheringStateChangeHandler() {
+			try {
+				let message = `iceGatheringState: ${peer.iceGatheringState}`;
+				console.log(message);
+				document.getElementById('iceGatheringState_x').innerText = peer.iceGatheringState
+				//socket.emit('broadcast', {channel: 'log', message: message });
+				switch (peer.iceGatheringState) {
+					case "new":
+						break;
+					case "gathering":
+						break;
+					case "complete":
+						document.getElementById('createdOffer').value = JSON.stringify(peer.localDescription)
+						document.getElementById('createdOffer').removeAttribute('hidden');
+						jsonStringOffer = JSON.stringify(peer.localDescription)
+						// console.log("Offer:", peer.localDescription)
+						const localDescription = peer.localDescription;
+						const sdp = localDescription.sdp;
+						const type = localDescription.type
+						console.log("Offer with ICE candidates included:", { sdp, type }); //show as object
+						btnDownload.disabled = false;
+						break;
+					default:
+						console.log("State not found");
+						break;
+				}
+			} catch (e) {
+				console.log("exception", e);
+			}
+		}
+
+		async function iceConnectionStateChangeHandler(event) {
+			try {
+				let message = `iceConnectionState:  ${peer.iceConnectionState}`;
+				console.log(message);
+				document.getElementById('iceConnectionState_x').innerText = peer.iceConnectionState
+				//socket.emit('broadcast', {channel: 'log', message: message });
+				switch (peer.iceConnectionState) {
+					case "new":
+						break;
+					case "completed":
+						break;
+					case "disconnected":
+						break;
+				}
+			} catch (e) {
+				console.log("exception", e);
+			}
+		}
+
+		async function iceCandidateHandler(event) {
+			if (event.candidate) {
+				console.log("ICE_candidate", event.candidate);
+			}
+		}
+
+		async function iceCandidateErrorHandler(event) {
+			//console.error(event);
+		}
+
+		async function connectionStateChangeHandler() {
+			// ICEConnection: new -> checking -> connected -> completed -> disconnected -> closed -> failed
+			console.log(`Connection State: ${peer.connectionState}`);
+			document.getElementById('connectionState_x').innerText = peer.connectionState
+			switch (peer.connectionState) {
+				case "disconnected":
+					console.warn("Disconnected - wait recover connection")
+					break;
+				case "closed":
+				case "failed":
+					console.warn("Timeout. Trying to reconnect...")
+					break;
+				case "connected":
+					console.log("webRTC connection established")
+					break;
+			}
+		}
+
+		async function dataChannelEvent(event) {
+			console.log('dataChannel event occured')
+			channel = event.channel
+			channel.onmessage = (event) => alert(event.data)
+		}
+
+		async function acceptAnswer() {
+			console.log('Accepting Answer')
+			const answer = JSON.parse(document.getElementById('remoteAnswer').value)
+
+			console.log("Setting remoteDescription with provided answer");
+			await peer.setRemoteDescription(answer);
+
+			btnStart.disabled = true;
+			btnStop.disabled = false;
+		}
+
+		/**
+		 * Call this method when you want to reduce the speed to
+		 * test content hint, simulating situations when you have bad connections
+		 */
+		function forceKbps(sdp, speed) {
+			console.warn(`Forcekbps - ${speed} kbps`)
+			return sdp.replace(/a=mid:(.*)\r\n/g, 'a=mid:$1\r\nb=AS:' + speed + '\r\n');
+		}
+
+		async function send_text() {
+			const text = document.getElementById('text').value
+			channel.send(text)
+		}
+
+		async function startNegotiation() {
+			console.log("Negotiation - Creating offer and setting localDescription")
+
+			offer = await peer.createOffer();
+
+			//offer.sdp = forceKbps(offer.sdp, 50)
+
+			//await sendOfferToServer(offer.sdp);
+			console.log("Offer without ICE candidates:", offer)
+			await peer.setLocalDescription(offer)
+		}
+
+		//start
+		async function start() {
+			console.log('Start Call')
+			document.getElementById('createdOffer').removeAttribute('hidden');
+			document.getElementById('createdOffer').value = "Generating SDP offer, please wait..."
+			createPeer();
+			await startNegotiation();
+		}
+
+		function stop() {
+			console.log('Stop Call')
+			peer.close();
+			btnStart.disabled = false;
+			btnStop.disabled = true;
+			document.getElementById('createdOffer').setAttribute('hidden', true);
+			document.getElementById('remoteAnswer').value = "";
+		}
+
+		btnIceUpload.addEventListener("click", uploadIceConfig);
+		btnStart.addEventListener("click", start);
+		btnStop.addEventListener("click", stop);
+		btnDownload.addEventListener("click", downloadOffer);
+		btnUpload.addEventListener("click", uploadAnswer);
+	</script>
+</body>
+
+</html>
